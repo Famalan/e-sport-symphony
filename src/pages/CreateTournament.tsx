@@ -1,30 +1,28 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { toast } from "sonner";
 
-interface TournamentForm {
-  name: string;
-  type: string;
-  description: string;
-  rules: string;
-  maxTeams: number;
-}
-
 const CreateTournament = () => {
-  const form = useForm<TournamentForm>();
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "single",
+    description: "",
+    rules: "",
+    maxTeams: 8,
+  });
 
-  const onSubmit = (data: TournamentForm) => {
-    console.log("Tournament data:", data);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Tournament data:", formData);
     toast.success("Турнир успешно создан!");
     navigate("/tournaments");
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -32,108 +30,99 @@ const CreateTournament = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Создать турнир</h1>
-          <p className="text-muted-foreground">Заполните форму для создания нового турнира</p>
+          <p className="text-gray-500">Заполните форму для создания нового турнира</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Информация о турнире</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Название турнира</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Введите название турнира" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Название турнира
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Введите название турнира"
+                required
+              />
+            </div>
 
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Тип турнира</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите тип турнира" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="single">Single Elimination</SelectItem>
-                          <SelectItem value="double">Double Elimination</SelectItem>
-                          <SelectItem value="round">Round Robin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Тип турнира
+              </label>
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="single">Single Elimination</option>
+                <option value="double">Double Elimination</option>
+                <option value="round">Round Robin</option>
+              </select>
+            </div>
 
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Описание</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Введите описание турнира"
-                          className="min-h-[100px]"
-                          {...field}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Описание
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[100px]"
+                placeholder="Введите описание турнира"
+              />
+            </div>
 
-                <FormField
-                  control={form.control}
-                  name="rules"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Правила</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Введите правила турнира"
-                          className="min-h-[100px]"
-                          {...field}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Правила
+              </label>
+              <textarea
+                name="rules"
+                value={formData.rules}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[100px]"
+                placeholder="Введите правила турнира"
+              />
+            </div>
 
-                <FormField
-                  control={form.control}
-                  name="maxTeams"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Максимальное количество команд</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="2" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Максимальное количество команд
+              </label>
+              <input
+                type="number"
+                name="maxTeams"
+                value={formData.maxTeams}
+                onChange={handleChange}
+                min="2"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
 
-                <div className="flex justify-end gap-4">
-                  <Button variant="outline" onClick={() => navigate("/tournaments")}>
-                    Отмена
-                  </Button>
-                  <Button type="submit">Создать турнир</Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+            <div className="flex justify-end gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/tournaments")}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Отмена
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Создать турнир
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </DashboardLayout>
   );
