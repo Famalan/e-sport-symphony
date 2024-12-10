@@ -1,3 +1,5 @@
+import { Button } from "./ui/button";
+
 export const CTA = () => {
   return (
     <div className="py-24 relative">
@@ -11,12 +13,12 @@ export const CTA = () => {
             Join thousands of organizers and players in the ultimate esports tournament platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-6 py-3 text-lg bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
+            <Button size="lg" className="text-lg">
               Create Tournament
-            </button>
-            <button className="px-6 py-3 text-lg bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors">
+            </Button>
+            <Button size="lg" variant="secondary" className="text-lg">
               Contact Sales
-            </button>
+            </Button>
           </div>
         </div>
       </div>
