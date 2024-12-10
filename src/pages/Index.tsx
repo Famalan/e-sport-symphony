@@ -1,10 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { DashboardLayout } from "@/components/DashboardLayout";
 import { Plus, Users, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
+import { DashboardLayout } from "@/components/DashboardLayout";
 
 const Index = () => {
-  // Моковые данные для турниров
   const tournaments = [
     {
       id: 1,
@@ -29,38 +27,36 @@ const Index = () => {
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold mb-2">Турниры</h1>
-          <p className="text-gray-500">Управление киберспортивными турнирами</p>
+          <p className="text-muted-foreground">Управление киберспортивными турнирами</p>
         </div>
         <Link to="/tournaments/create">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-            <Plus className="w-4 h-4" /> 
-            Создать турнир
+          <button className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
+            <Plus className="mr-2 h-4 w-4" /> Создать турнир
           </button>
         </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {tournaments.map((tournament) => (
-          <div 
-            key={tournament.id} 
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-gray-200"
-          >
-            <h3 className="text-xl font-semibold mb-2">{tournament.name}</h3>
-            <p className="text-gray-600 mb-4">{tournament.type}</p>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-gray-500">
-                <Users className="w-4 h-4" />
+          <div key={tournament.id} className="bg-card rounded-lg border border-border p-6 hover:border-primary/50 transition-colors">
+            <div className="mb-4">
+              <h3 className="text-xl font-semibold">{tournament.name}</h3>
+              <p className="text-muted-foreground text-sm">{tournament.type}</p>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Users className="h-4 w-4" />
                 <span>{tournament.teams} команд</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-500">
-                <Calendar className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Calendar className="h-4 w-4" />
                 <span>{tournament.startDate}</span>
               </div>
               <div className="flex justify-between items-center mt-4">
-                <span className="text-sm font-medium text-blue-600">
+                <span className="text-sm font-medium text-primary">
                   {tournament.status}
                 </span>
-                <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">
+                <button className="px-3 py-1 bg-secondary text-secondary-foreground rounded hover:bg-secondary/80 transition-colors text-sm">
                   Подробнее
                 </button>
               </div>
