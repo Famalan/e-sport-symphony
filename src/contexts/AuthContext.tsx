@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -10,6 +9,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, role?: string) => Promise<void>;
   signOut: () => Promise<void>;
+  isAdmin: boolean;
+  isOrganizer: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,40 +18,67 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isOrganizer, setIsOrganizer] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      checkUserRole(session?.user);
       setLoading(false);
     });
 
-    // Listen for changes on auth state
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      checkUserRole(session?.user);
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  const checkUserRole = async (user: User | null) => {
+    if (!user) {
+      setIsAdmin(false);
+      setIsOrganizer(false);
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profile) {
+      setIsAdmin(profile.role === 'admin');
+      setIsOrganizer(profile.role === 'organizer');
+    }
+  };
+
   const signUp = async (email: string, password: string, role: string = 'player') => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: { user }, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            role,
-          },
-        },
       });
 
       if (error) throw error;
-      toast.success('Регистрация успешна! Проверьте вашу почту.');
+
+      if (user) {
+        await supabase.from('users').insert([
+          {
+            id: user.id,
+            email: user.email,
+            role,
+          },
+        ]);
+      }
+
+      console.log('Регистрация успешна! Проверьте вашу почту.');
     } catch (error) {
-      toast.error('Ошибка при регистрации');
+      console.error('Ошибка при регистрации:', error);
       throw error;
     }
   };
@@ -63,10 +91,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw error;
-      toast.success('Успешный вход');
+      console.log('Успешный вход');
       navigate('/tournaments');
     } catch (error) {
-      toast.error('Ошибка при входе');
+      console.error('Ошибка при входе:', error);
       throw error;
     }
   };
@@ -77,13 +105,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
       navigate('/login');
     } catch (error) {
-      toast.error('Ошибка при выходе');
+      console.error('Ошибка при выходе:', error);
       throw error;
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      signIn, 
+      signUp, 
+      signOut,
+      isAdmin,
+      isOrganizer
+    }}>
       {!loading && children}
     </AuthContext.Provider>
   );

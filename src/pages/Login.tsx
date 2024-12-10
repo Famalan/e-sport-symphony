@@ -1,87 +1,100 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
-import { z } from "zod";
-
-const loginSchema = z.object({
-  email: z.string().email("Введите корректный email"),
-  password: z.string().min(6, "Минимальная длина пароля - 6 символов"),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
 
 const Login = () => {
-  const { signIn } = useAuth();
-  const form = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
-  });
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("player");
+  const navigate = useNavigate();
+  const { signIn, signUp } = useAuth();
 
-  const onSubmit = async (data: LoginForm) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      await signIn(data.email, data.password);
+      if (isLogin) {
+        await signIn(email, password);
+      } else {
+        await signUp(email, password, role);
+      }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Authentication error:", error);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-[400px]">
-        <CardHeader>
-          <CardTitle>Вход в систему</CardTitle>
-          <CardDescription>
-            Войдите в свой аккаунт для управления турнирами
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="your@email.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
+        <div>
+          <h2 className="text-center text-3xl font-bold">
+            {isLogin ? "Вход в систему" : "Регистрация"}
+          </h2>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Пароль</FormLabel>
-                    <FormControl>
-                      <Input type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Пароль
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
-              <div className="flex flex-col gap-4">
-                <Button type="submit" className="w-full">
-                  Войти
-                </Button>
-                <p className="text-center text-sm text-muted-foreground">
-                  Нет аккаунта?{" "}
-                  <Link to="/register" className="text-primary hover:underline">
-                    Зарегистрироваться
-                  </Link>
-                </p>
+            </div>
+            {!isLogin && (
+              <div>
+                <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                  Роль
+                </label>
+                <select
+                  id="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="player">Игрок</option>
+                  <option value="organizer">Организатор</option>
+                </select>
               </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            )}
+          </div>
+          <div>
+            <button
+              type="submit"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {isLogin ? "Войти" : "Зарегистрироваться"}
+            </button>
+          </div>
+        </form>
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-sm text-indigo-600 hover:text-indigo-500"
+          >
+            {isLogin ? "Создать аккаунт" : "Уже есть аккаунт? Войти"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
