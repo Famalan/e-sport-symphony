@@ -19,8 +19,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-    username: z.string().min(3, {
-        message: "Имя пользователя должно содержать минимум 3 символа",
+    email: z.string().email({
+        message: "Пожалуйста, введите корректный email",
     }),
     password: z.string().min(6, {
         message: "Пароль должен содержать минимум 6 символов",
@@ -37,7 +37,7 @@ export function LoginForm() {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            username: "",
+            email: "",
             password: "",
         },
     });
@@ -45,7 +45,7 @@ export function LoginForm() {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         try {
             setIsLoading(true);
-            await login(values.username, values.password);
+            await login(values.email, values.password);
             
             const from = location.state?.from?.pathname || "/";
             navigate(from, { replace: true });
@@ -77,14 +77,15 @@ export function LoginForm() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
                         control={form.control}
-                        name="username"
+                        name="email"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Имя пользователя</FormLabel>
+                                <FormLabel>Email</FormLabel>
                                 <FormControl>
                                     <Input
                                         disabled={isLoading}
-                                        placeholder="Введите имя пользователя"
+                                        placeholder="Введите email"
+                                        type="email"
                                         {...field}
                                     />
                                 </FormControl>

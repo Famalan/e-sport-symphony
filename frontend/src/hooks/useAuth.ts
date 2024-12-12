@@ -7,7 +7,7 @@ interface AuthState {
     isLoading: boolean;
     error: string | null;
     isAuthenticated: boolean;
-    login: (username: string, password: string) => Promise<void>;
+    login: (email: string, password: string) => Promise<void>;
     logout: () => void;
     checkAuth: () => Promise<void>;
 }
@@ -18,11 +18,11 @@ export const useAuth = create<AuthState>((set) => ({
     error: null,
     isAuthenticated: false,
 
-    login: async (username: string, password: string) => {
+    login: async (email: string, password: string) => {
         try {
             set({ isLoading: true, error: null });
             const { data } = await apiClient.post("/auth/login", {
-                username,
+                email,
                 password,
             });
             localStorage.setItem("token", data.access_token);
