@@ -5,9 +5,7 @@ import { Navigate } from "react-router-dom";
 
 const Login = () => {
     const { isAuthenticated } = useAuth();
-    const navigate = useNavigate();
     const location = useLocation();
-
     const from = location.state?.from?.pathname || "/";
 
     if (isAuthenticated) {
@@ -15,8 +13,10 @@ const Login = () => {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center">
-            <LoginForm />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+                <LoginForm />
+            </div>
         </div>
     );
 };
