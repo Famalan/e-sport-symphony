@@ -1,18 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "@/api/client";
 import { Tournament } from "@/types";
 import { TournamentCard } from "./TournamentCard";
+import { tournamentService } from "@/services/tournamentService";
 
 export function TournamentList() {
     const { data: tournaments = [], isLoading } = useQuery({
         queryKey: ["tournaments"],
-        queryFn: async () => {
-            const { data } = await apiClient.get("/tournaments/");
-            return data;
-        },
+        queryFn: tournamentService.getAll,
     });
 
-    if (isLoading) return <div>Загрузка...</div>;
+    if (isLoading) {
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="h-48 rounded-lg bg-muted animate-pulse"
+                    />
+                ))}
+            </div>
+        );
+    }
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
