@@ -20,10 +20,10 @@ import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
     email: z.string().email({
-        message: "Пожалуйста, введите корректный email",
+        message: "Please enter a valid email address",
     }),
     password: z.string().min(6, {
-        message: "Пароль должен содержать минимум 6 символов",
+        message: "Password must be at least 6 characters",
     }),
 });
 
@@ -51,14 +51,14 @@ export function LoginForm() {
             navigate(from, { replace: true });
             
             toast({
-                title: "Успешный вход",
-                description: "Добро пожаловать в систему",
+                title: "Login successful",
+                description: "Welcome back!",
             });
         } catch (error) {
             toast({
                 variant: "destructive",
-                title: "Ошибка входа",
-                description: "Проверьте правильность введенных данных",
+                title: "Login failed",
+                description: "Please check your credentials and try again",
             });
         } finally {
             setIsLoading(false);
@@ -68,10 +68,8 @@ export function LoginForm() {
     return (
         <div className="mx-auto max-w-sm space-y-6">
             <div className="space-y-2 text-center">
-                <h1 className="text-2xl font-bold">Вход в систему</h1>
-                <p className="text-gray-500">
-                    Введите свои данные для входа
-                </p>
+                <h1 className="text-2xl font-bold">Welcome back</h1>
+                <p className="text-gray-500">Enter your credentials to continue</p>
             </div>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -84,7 +82,7 @@ export function LoginForm() {
                                 <FormControl>
                                     <Input
                                         disabled={isLoading}
-                                        placeholder="Введите email"
+                                        placeholder="Enter your email"
                                         type="email"
                                         {...field}
                                     />
@@ -98,12 +96,12 @@ export function LoginForm() {
                         name="password"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Пароль</FormLabel>
+                                <FormLabel>Password</FormLabel>
                                 <FormControl>
                                     <Input
                                         disabled={isLoading}
                                         type="password"
-                                        placeholder="Введите пароль"
+                                        placeholder="Enter your password"
                                         {...field}
                                     />
                                 </FormControl>
@@ -116,7 +114,7 @@ export function LoginForm() {
                         className="w-full"
                         disabled={isLoading}
                     >
-                        {isLoading ? "Вход..." : "Войти"}
+                        {isLoading ? "Signing in..." : "Sign in"}
                     </Button>
                 </form>
             </Form>
