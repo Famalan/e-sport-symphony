@@ -1,69 +1,181 @@
-# Welcome to your Lovable project
+# Проект: Веб-приложение для организации киберспортивных турниров
 
-## Project info
+### Технологии:
 
-**URL**: https://lovable.dev/projects/b390dcff-ce51-43b9-8b79-ccfdb87bdf69
+-   **Backend**: Python + FastAPI
+-   **Frontend**: React + Tailwind CSS + TypeScript + Vite
+-   **База данных**: PostgreSQL
+-   **ORM**: SQLAlchemy (есть условия использования)
+-   **Дополнительные библиотеки**: Alembic (для миграций), JWT (для аутентификации), bcrypt (для хеширования паролей).
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## Описание проекта:
 
-**Use Lovable**
+Веб-приложение предназначено для управления киберспортивными турнирами. Система позволяет создавать турниры, управлять командами, организовывать расписание матчей, отображать сетку игр и отслеживать результаты.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b390dcff-ce51-43b9-8b79-ccfdb87bdf69) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## Основной функционал:
 
-**Use your preferred IDE**
+1. **Авторизация и управление пользователями**:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+    - Регистрация и авторизация пользователей через логин и пароль.
+    - Роли пользователей:
+        - **Администратор** (создание турниров, управление пользователями).
+        - **Организатор** (создание и настройка турниров, управление командами).
+        - **Игрок** (участие в турнирах, управление своими командами).
+    - Безопасное хранение паролей (хеширование с помощью bcrypt).
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+2. **Создание турниров**:
 
-Follow these steps:
+    - Организатор может создавать турнир с указанием:
+        - Названия.
+        - Типа турнира (одинарный/двойной элиминейшен, круговой).
+        - Правил участия.
+    - Возможность предварительной настройки: добавить правила, описание.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. **Создание команд**:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+    - Пользователи могут создавать команды, участвовать в турнирах.
+    - Управление участниками команды (капитан добавляет/удаляет игроков).
 
-# Step 3: Install the necessary dependencies.
-npm i
+4. **Сетка турниров**:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+    - Генерация турнирной сетки на основе количества команд.
+    - Возможность просмотра результатов матчей.
 
-**Edit a file directly in GitHub**
+5. **Управление расписанием матчей**:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+    - Планирование времени матчей.
+    - Изменение расписания и уведомление участников.
 
-**Use GitHub Codespaces**
+6. **Архивирование данных**:
+    - Администратор может создавать резервные копии базы данных.
+    - Возможность восстановления данных через интерфейс.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+## Архитектура базы данных (минимум 7 таблиц):
 
-This project is built with .
+1. **Users**:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+    - `id`: первичный ключ.
+    - `username`: уникальный никнейм.
+    - `hashed_password`: хешированный пароль.
+    - `role`: роль пользователя.
+    - `created_at`, `updated_at`.
 
-## How can I deploy this project?
+2. **Tournaments**:
 
-Simply open [Lovable](https://lovable.dev/projects/b390dcff-ce51-43b9-8b79-ccfdb87bdf69) and click on Share -> Publish.
+    - `id`: первичный ключ.
+    - `name`: название турнира.
+    - `type`: тип турнира (строка).
+    - `rules`: текст правил.
+    - `created_by`: внешний ключ на `Users`.
+    - `created_at`, `updated_at`.
 
-## I want to use a custom domain - is that possible?
+3. **Teams**:
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+    - `id`: первичный ключ.
+    - `name`: название команды.
+    - `captain_id`: внешний ключ на `Users` (капитан команды).
+    - `created_at`, `updated_at`.
+
+4. **Players**:
+
+    - `id`: первичный ключ.
+    - `user_id`: внешний ключ на `Users`.
+    - `team_id`: внешний ключ на `Teams`.
+
+5. **Matches**:
+
+    - `id`: первичный ключ.
+    - `tournament_id`: внешний ключ на `Tournaments`.
+    - `team1_id`, `team2_id`: внешние ключи на `Teams`.
+    - `score_team1`, `score_team2`: результаты матча.
+    - `start_time`, `end_time`.
+
+6. **Bracket**:
+
+    - `id`: первичный ключ.
+    - `tournament_id`: внешний ключ на `Tournaments`.
+    - `match_id`: внешний ключ на `Matches`.
+    - `round`: номер раунда.
+    - `position`: позиция в сетке.
+
+7. **Backup**:
+    - `id`: первичный ключ.
+    - `file_path`: путь к файлу резервной копии.
+    - `created_by`: внешний ключ на `Users`.
+    - `created_at`.
+
+---
+
+## Реализация:
+
+### Backend:
+
+-   **FastAPI**:
+
+    -   Реализация всех API-эндпоинтов для CRUD операций.
+    -   Асинхронная обработка запросов.
+    -   Валидация входных данных через Pydantic.
+
+-   **Функционал API**:
+
+    -   Авторизация (JWT-токены).
+    -   CRUD для пользователей, турниров, команд, матчей.
+    -   Генерация и управление турнирной сеткой.
+
+-   **Резервное копирование**:
+    -   Скрипт для создания дампа базы данных (`pg_dump`).
+    -   API для загрузки/восстановления архива.
+
+### Frontend:
+
+-   **React + Tailwind CSS**:
+    -   Простая и интуитивно понятная структура страниц.
+    -   Асинхронное взаимодействие с сервером через Axios/Fetch.
+    -   Интерфейс для просмотра и управления турнирами, командами, сеткой.
+
+---
+
+## Требования к проекту:
+
+1. Использовать СУБД PostgreSQL.
+2. Минимум 7 таблиц в базе данных, приведенных к третьей нормальной форме (3NF).
+3. Все запросы к базе данных должны формироваться вручную.
+4. Допускается использование ORM только для передачи SQL-запросов через методы вроде `session.execute`.
+5. Запрещено:
+    - Формирование SQL-запросов на стороне клиента.
+    - Использование UI-сред (DBeaver, pgAdmin, DataGrip) для проектирования базы данных.
+6. База данных должна содержать представления (views), хранимые процедуры, триггеры и функции.
+7. Структура базы данных должна быть инициализирована через SQL-скрипты.
+8. Клиентское приложение должно быть веб-приложением.
+9. Реализовать асинхронное взаимодействие между клиентом и сервером через REST API.
+10. Пароли пользователей должны храниться в виде хэшей (например, bcrypt).
+11. Обеспечить авторизацию пользователей с различными ролями (администратор, организатор, игрок) с разграничением прав доступа.
+12. Вся бизнес-логика должна находиться на стороне backend.
+13. Обеспечить корректную обработку ошибок на уровне базы данных, backend и клиентского приложения.
+14. Реализовать резервное копирование базы данных и восстановление данных через клиентское приложение.
+15. Все SQL-запросы должны быть строго параметризованными для предотвращения SQL-инъекций.
+16. Реализовать функции для выполнения CRUD-операций для всех основных сущностей.
+17. Предоставить понятный и удобный интерфейс клиентского приложения, обеспечивающий доступ ко всем функциям.
+18. Графическое отображение данных, где это необходимо (например, турнирные сетки).
+19. Обеспечить асинхронность работы системы для независимого взаимодействия разных пользователей.
+20. Разработка SQL-запросов вручную.
+21. Подключение ORM только для выполнения запросов, но не для автоматического маппинга классов на таблицы.
+
+---
+
+## План разработки:
+
+1. Настройка окружения (FastAPI + PostgreSQL + React).
+2. Проектирование базы данных и реализация моделей.
+3. Создание базовых эндпоинтов (авторизация, турниры, команды).
+4. Реализация турнирной сетки и расписания матчей.
+5. Интеграция с фронтендом.
+6. Тестирование и деплой.
+
+---
