@@ -6,6 +6,7 @@ interface AuthState {
     user: User | null;
     isLoading: boolean;
     error: string | null;
+    isAuthenticated: boolean;
     login: (username: string, password: string) => Promise<void>;
     logout: () => void;
     checkAuth: () => Promise<void>;
@@ -13,8 +14,9 @@ interface AuthState {
 
 export const useAuth = create<AuthState>((set) => ({
     user: null,
-    isLoading: false,
+    isLoading: true,
     error: null,
+    isAuthenticated: false,
 
     login: async (username: string, password: string) => {
         try {
@@ -24,7 +26,7 @@ export const useAuth = create<AuthState>((set) => ({
                 password,
             });
             localStorage.setItem("token", data.access_token);
-            set({ user: data.user });
+            set({ user: data.user, isAuthenticated: true });
         } catch (error) {
             set({ error: "Ошибка авторизации" });
             throw error;
@@ -35,21 +37,32 @@ export const useAuth = create<AuthState>((set) => ({
 
     logout: () => {
         localStorage.removeItem("token");
-        set({ user: null });
+        set({ user: null, isAuthenticated: false });
     },
 
     checkAuth: async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            set({ isLoading: false, isAuthenticated: false });
+            return;
+        }
+
         try {
             set({ isLoading: true, error: null });
             const { data } = await apiClient.get("/auth/me");
-            set({ user: data });
+            set({ user: data, isAuthenticated: true });
         } catch (error) {
-            set({ user: null });
+            set({ user: null, isAuthenticated: false });
+            localStorage.removeItem("token");
         } finally {
             set({ isLoading: false });
         }
     },
 }));
 
-// Проверяем аутентификацию при инициализации
-useAuth.getState().checkAuth();
+// Проверяем аутентификацию при инициализации только если есть токен
+if (localStorage.getItem("token")) {
+    useAuth.getState().checkAuth();
+} else {
+    useAuth.setState({ isLoading: false });
+}

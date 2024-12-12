@@ -1,12 +1,16 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PrivateRouteProps {
-    component: React.ComponentType<any>;
-} // добавлена закрывающая скобка
+    children: React.ReactNode;
+}
 
 export function PrivateRoute({ children }: PrivateRouteProps) {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
 
     if (!isAuthenticated) {
         return <Navigate to="/login" />;
@@ -15,4 +19,4 @@ export function PrivateRoute({ children }: PrivateRouteProps) {
     return <>{children}</>;
 }
 
-export default PrivateRoute; // добавлен экспорт по умолчанию
+export default PrivateRoute;

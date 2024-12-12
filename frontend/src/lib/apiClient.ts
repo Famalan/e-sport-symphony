@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAuth } from "@/hooks/useAuth";
 
 export const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1",
@@ -20,7 +21,7 @@ apiClient.interceptors.response.use(
     async (error) => {
         if (error.response?.status === 401) {
             localStorage.removeItem("token");
-            window.location.href = "/login";
+            useAuth.setState({ user: null, isAuthenticated: false });
         }
         return Promise.reject(error);
     }
