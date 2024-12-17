@@ -1,29 +1,20 @@
-import { DashboardLayout } from "@/components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateTournamentForm } from "@/components/tournaments/CreateTournamentForm";
+import { useAuth } from "@/hooks/useAuth";
 
-const CreateTournament = () => {
+export function CreateTournament() {
+    const { isAdmin } = useAuth();
+
     return (
-        <DashboardLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold">Создать турнир</h1>
-                    <p className="text-muted-foreground">
-                        Заполните форму для создания нового турнира
-                    </p>
-                </div>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Информация о турнире</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <CreateTournamentForm />
-                    </CardContent>
-                </Card>
+        <div className="container mx-auto py-6">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold">Создание турнира</h1>
+                <p className="text-muted-foreground">
+                    Заполните форму для создания нового турнира
+                </p>
             </div>
-        </DashboardLayout>
+            <div className="max-w-2xl">
+                <CreateTournamentForm />
+            </div>
+        </div>
     );
-};
-
-export default CreateTournament;
+}

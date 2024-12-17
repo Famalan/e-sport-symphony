@@ -1,19 +1,14 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.exc import SQLAlchemyError
-from app.api.v1 import users, tournaments, teams, matches, brackets, auth
-from app.core.config import settings
-from app.core.scheduler import setup_scheduler
-from app.core.exceptions import TournamentException
+from app.api.v1 import api_router
+from app.db.session import engine
+from app.db.create_tables import create_tables
+from app.db.init_db import init_db
+import asyncio
 
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    version=settings.VERSION,
-    redirect_slashes=False
-)
+app = FastAPI()
 
-# CORS middleware
+# Настройка CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -22,41 +17,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Обработчики ошибок
-@app.exception_handler(TournamentException)
-async def tournament_exception_handler(request: Request, exc: TournamentException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail}
-    )
-
-@app.exception_handler(SQLAlchemyError)
-async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Ошибка базы данных"}
-    )
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Внутренняя ошибка сервера"}
-    )
-
-# Подключение роутеров с явным указанием префикса
-app.include_router(auth.router, prefix="/api/v1/auth")
-app.include_router(users.router, prefix="/api/v1/users")
-app.include_router(tournaments.router, prefix="/api/v1/tournaments")
-app.include_router(teams.router, prefix="/api/v1/teams")
-app.include_router(matches.router, prefix="/api/v1/matches")
-app.include_router(brackets.router, prefix="/api/v1/brackets")
+app.include_router(api_router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def startup_event():
-    if settings.ENABLE_SCHEDULED_BACKUPS:
-        setup_scheduler()
+    # Создаем таблицы
+    await create_tables(engine)
+    
+    # Инициализируем базу данных тестовыми данными
+    from app.db.session import SessionLocal
+    async with SessionLocal() as session:
+        await init_db(session)
 
-@app.get("/")
-async def root():
-    return {"message": "Добро пожаловать в API киберспортивных турниров"}
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

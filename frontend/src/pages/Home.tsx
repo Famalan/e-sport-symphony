@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { Plus } from "lucide-react";
 
-export default function Home() {
+export const Home = () => {
+    const { user } = useAuth();
+
     return (
         <div className="flex flex-col items-center justify-center space-y-6 text-center">
             <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl">
@@ -19,13 +23,16 @@ export default function Home() {
                 >
                     Просмотреть турниры
                 </Link>
-                <Link
-                    to="/register"
-                    className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                    Создать аккаунт
-                </Link>
+                {user?.role === "ADMIN" && (
+                    <Link
+                        to="/tournaments/create"
+                        className="inline-flex h-10 items-center justify-center rounded-md bg-secondary px-8 text-sm font-medium text-secondary-foreground shadow transition-colors hover:bg-secondary/90"
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Создать турнир
+                    </Link>
+                )}
             </div>
         </div>
     );
-}
+};

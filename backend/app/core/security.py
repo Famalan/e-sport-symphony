@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, Dict
-from jose import JWTError, jwt
+from typing import Any, Union
+from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -15,31 +15,49 @@ logger = logging.getLogger(__name__)
 
 # Настройки безопасности
 SECRET_KEY = settings.SECRET_KEY
-ALGORITHM = "HS256"
+ALGORITHM = settings.ALGORITHM
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Проверка пароля"""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        logger.error(f"Ошибка при проверке пароля: {e}")
+        return False
 
 def get_password_hash(password: str) -> str:
-    """Получение хеша пароля"""
-    return pwd_context.hash(password)
+    """Получе��ие хеша пароля"""
+    try:
+        return pwd_context.hash(password)
+    except Exception as e:
+        logger.error(f"Ошибка при хешировании пароля: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при обработке пароля"
+        )
 
-def create_access_token(data: Dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(
+    data: dict,
+    expires_delta: Union[timedelta, None] = None
+) -> str:
     """Создание JWT токена"""
     to_encode = data.copy()
-    expire = datetime.utcnow() + (
-        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     to_encode.update({"exp": expire})
-    return jwt.encode(
+    encoded_jwt = jwt.encode(
         to_encode, 
         settings.SECRET_KEY, 
         algorithm=settings.ALGORITHM
     )
+    return encoded_jwt
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -54,7 +72,7 @@ async def get_current_user(
     
     try:
         logger.info("Декодируем токен...")
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: str = payload.get("sub")
         logger.info(f"ID пользователя из токена: {user_id}")
         
@@ -64,19 +82,11 @@ async def get_current_user(
             
         # Преобразуем строку в число
         user_id = int(user_id)
-    except (JWTError, ValueError) as e:
-        logger.error(f"Ошибка при обработке токена: {e}")
+    except JWTError:
         raise credentials_exception
     
     query = text("""
-        SELECT 
-            id,
-            username,
-            email,
-            role,
-            is_active,
-            created_at,
-            updated_at
+        SELECT id, username, role
         FROM users
         WHERE id = :user_id
     """)
@@ -90,23 +100,8 @@ async def get_current_user(
             logger.error(f"Пользователь с ID {user_id} не найден")
             raise credentials_exception
             
-        if not user.is_active:
-            logger.error(f"Пользователь с ID {user_id} неактивен")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Пользователь неактивен"
-            )
-        
         logger.info(f"Пользователь найден: {user}")
-        return {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "role": user.role,
-            "is_active": user.is_active,
-            "created_at": user.created_at,
-            "updated_at": user.updated_at
-        }
+        return user
     except Exception as e:
         logger.error(f"Ошибка при получении пользователя: {e}")
         raise HTTPException(

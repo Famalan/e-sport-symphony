@@ -1,37 +1,51 @@
+export type UserRole = "ADMIN" | "ORGANIZER" | "PLAYER";
+
 export interface User {
     id: number;
     username: string;
     email: string;
     role: UserRole;
-}
-
-export enum UserRole {
-    ADMIN = "ADMIN",
-    ORGANIZER = "ORGANIZER",
-    PLAYER = "PLAYER",
+    created_at: string;
+    updated_at: string;
 }
 
 export interface Tournament {
     id: number;
     name: string;
-    type: TournamentType;
-    status: TournamentStatus;
-    startDate: string;
-    endDate: string | null;
+    description?: string;
+    type: "single_elimination" | "double_elimination" | "round_robin";
+    status: string;
+    rules?: string;
+    max_teams: number;
+    registration_deadline: string;
+    start_date: string;
+    end_date: string;
+    created_by: number;
+    registered_teams: number;
+}
+
+export interface Team {
+    id: number;
+    name: string;
     description: string;
-    rules: string;
-    maxTeams: number;
-    registeredTeams: number;
-    createdBy: number;
+    logo_url?: string;
+}
+
+export interface TeamCreateData {
+    name: string;
+    description: string;
+    logo_url?: string;
 }
 
 export interface TournamentCreate {
     name: string;
-    type: TournamentType;
-    startDate: string;
-    description: string;
-    rules: string;
-    maxTeams: number;
+    description?: string;
+    type: "single_elimination" | "double_elimination" | "round_robin";
+    rules?: string;
+    max_teams: number;
+    registration_deadline: string;
+    start_date: string;
+    end_date: string;
 }
 
 export enum TournamentType {
@@ -64,4 +78,10 @@ export interface Match {
 export interface AuthResponse {
     access_token: string;
     token_type: string;
+    user: User; // Добавлено поле user
+}
+
+export interface RegisterData {
+    username: string;
+    password: string;
 }

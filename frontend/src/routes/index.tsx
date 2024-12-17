@@ -4,6 +4,8 @@ import { PrivateRoute } from "./PrivateRoute";
 import { Home } from "../pages/Home";
 import Tournaments from "../pages/Tournaments";
 import TournamentDetails from "../pages/TournamentDetails";
+import EditTournament from "../pages/EditTournament";
+import { CreateTournament } from "@/pages/CreateTournament";
 
 export function Routes() {
     return (
@@ -31,6 +33,14 @@ export function Routes() {
                     <PrivateRoute>
                         <TournamentDetails />
                     </PrivateRoute>
+                }
+            />
+            <Route
+                path="/tournaments/create"
+                element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <CreateTournament />
+                    </ProtectedRoute>
                 }
             />
         </RouterRoutes>

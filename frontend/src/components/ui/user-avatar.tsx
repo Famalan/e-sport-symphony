@@ -6,7 +6,7 @@ interface UserAvatarProps {
 }
 
 export function UserAvatar({ user }: UserAvatarProps) {
-    if (!user) return null;
+    if (!user || !user.username) return null;
 
     return (
         <Avatar>

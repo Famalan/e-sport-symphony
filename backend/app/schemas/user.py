@@ -1,35 +1,37 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 from app.models.user import UserRole
 
 class UserBase(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    email: EmailStr
-
-class UserCreate(UserBase):
-    password: str = Field(..., min_length=6)
-    role: Optional[UserRole] = UserRole.PLAYER
-
-class UserUpdate(BaseModel):
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
-    email: Optional[EmailStr] = None
-    password: Optional[str] = Field(None, min_length=6)
-
-class User(UserBase):
     id: int
+    username: str
+    email: EmailStr
     role: UserRole
-    is_active: bool
-    created_at: datetime
-    updated_at: datetime
 
     class Config:
         from_attributes = True
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    email: Optional[str] = None
 
-class TokenPayload(BaseModel):
-    sub: Optional[int] = None
-    role: Optional[UserRole] = None 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+
+class UserRoleUpdate(BaseModel):
+    role: UserRole
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    role: UserRole
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

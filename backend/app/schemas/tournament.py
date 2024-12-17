@@ -1,42 +1,41 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
-from enum import Enum
-
-class TournamentType(str, Enum):
-    SINGLE_ELIMINATION = "single_elimination"
-    DOUBLE_ELIMINATION = "double_elimination"
-    ROUND_ROBIN = "round_robin"
-
-class TournamentStatus(str, Enum):
-    REGISTRATION = "registration"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
+from typing import Optional, List
+from app.models.tournament import TournamentStatus
 
 class TournamentBase(BaseModel):
-    name: str = Field(..., min_length=3, max_length=100)
+    name: str
     description: Optional[str] = None
-    type: TournamentType
+    type: str
     rules: Optional[str] = None
-    max_teams: int = Field(..., ge=2, le=64)
-    registration_deadline: datetime
-    start_date: datetime
-    end_date: datetime
+    max_teams: Optional[int] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
 
 class TournamentCreate(TournamentBase):
     pass
 
-class TournamentUpdate(TournamentBase):
-    pass
+class TournamentUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    type: Optional[str] = None
+    rules: Optional[str] = None
+    max_teams: Optional[int] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    status: Optional[TournamentStatus] = None
 
-class Tournament(TournamentBase):
+class TournamentResponse(TournamentBase):
     id: int
-    status: TournamentStatus
     created_by: int
     created_at: datetime
     updated_at: datetime
-    organizer_name: Optional[str] = None
+    status: TournamentStatus
+    teams: List[dict] = []
+    matches: List[dict] = []
 
     class Config:
         from_attributes = True 
+
+class TournamentStatusUpdate(BaseModel):
+    status: TournamentStatus

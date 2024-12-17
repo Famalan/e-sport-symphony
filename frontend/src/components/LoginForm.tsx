@@ -23,6 +23,10 @@ const LoginForm: React.FC = () => {
         },
         onSuccess: (data) => {
             // Обработка успешного входа
+            // Сохранение данных пользователя
+            // Например:
+            // setUser(data.user);
+            // localStorage.setItem('token', data.access_token);
         },
     });
 

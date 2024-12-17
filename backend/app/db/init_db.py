@@ -2,63 +2,68 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import UserRole
 from app.core.security import get_password_hash
 from sqlalchemy import text
+from app.db.check_db import check_tables
 
 async def init_db(db: AsyncSession) -> None:
     try:
-        # Проверяем, существует ли уже admin
-        query = text("SELECT * FROM users WHERE username = :username")
-        result = await db.execute(query, {"username": "admin"})
-        admin = result.fetchone()
+        # Проверяем существование таблиц
+        tables_info = await check_tables(db)
+        if not tables_info.get("tables_exist"):
+            print(f"Отсутствуют необходимые таблицы. Существующие таблицы: {tables_info.get('existing_tables')}")
+            return
 
-        if not admin:
-            # SQL запрос для вставки пользователя
-            insert_query = text("""
+        # Проверяем наличие пользователей
+        check_users_query = text("SELECT COUNT(*) FROM users")
+        result = await db.execute(check_users_query)
+        users_count = result.scalar()
+
+        if users_count == 0:
+            print("Создание тестовых пользователей...")
+            # Создаем базовых пользователей
+            base_users_query = text("""
                 INSERT INTO users (username, email, hashed_password, role, is_active)
-                VALUES (:username, :email, :hashed_password, :role, :is_active)
+                VALUES 
+                ('admin', 'admin@example.com', :admin_pass, 'ADMIN', true),
+                ('player1', 'player1@example.com', :player_pass, 'PLAYER', true),
+                ('player2', 'player2@example.com', :player_pass, 'PLAYER', true),
+                ('player3', 'player3@example.com', :player_pass, 'PLAYER', true)
+                ON CONFLICT (username) DO NOTHING
+                RETURNING id
             """)
-
-            # Создаем администратора
-            await db.execute(
-                insert_query,
-                {
-                    "username": "admin",
-                    "email": "admin@example.com",
-                    "hashed_password": get_password_hash("admin"),
-                    "role": UserRole.ADMIN,
-                    "is_active": True
-                }
-            )
-
-            # Создаем тестовых организаторов
-            for i in range(1, 3):
-                await db.execute(
-                    insert_query,
-                    {
-                        "username": f"organizer{i}",
-                        "email": f"organizer{i}@example.com",
-                        "hashed_password": get_password_hash("organizer"),
-                        "role": UserRole.ORGANIZER,
-                        "is_active": True
-                    }
-                )
-
-            # Создаем тестовых игроков
-            for i in range(1, 5):
-                await db.execute(
-                    insert_query,
-                    {
-                        "username": f"player{i}",
-                        "email": f"player{i}@example.com",
-                        "hashed_password": get_password_hash("player"),
-                        "role": UserRole.PLAYER,
-                        "is_active": True
-                    }
-                )
-
+            
+            await db.execute(base_users_query, {
+                "admin_pass": get_password_hash("admin"),
+                "player_pass": get_password_hash("player123")
+            })
             await db.commit()
-            print("База данных инициализирована")
-        else:
-            print("База данных уже инициализирована")
+            print("Тестовые пользователи созданы")
+
+        # Проверяем наличие команд
+        check_teams_query = text("SELECT COUNT(*) FROM teams")
+        result = await db.execute(check_teams_query)
+        teams_count = result.scalar()
+
+        if teams_count == 0:
+            print("Создание тестовых команд...")
+            teams_query = text("""
+                INSERT INTO teams (name, captain_id)
+                SELECT 
+                    t.name, 
+                    u.id as captain_id
+                FROM (
+                    VALUES 
+                    ('Team Alpha', 'player1'),
+                    ('Digital Dragons', 'player2'),
+                    ('Cyber Knights', 'player3')
+                ) as t(name, captain_username)
+                JOIN users u ON u.username = t.captain_username
+                RETURNING id
+            """)
+            
+            teams_result = await db.execute(teams_query)
+            team_ids = teams_result.fetchall()
+            await db.commit()
+            print("Тестовые команды созданы")
 
     except Exception as e:
         print(f"Ошибка при инициализации базы данных: {e}")

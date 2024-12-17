@@ -1,34 +1,116 @@
 import { create } from "zustand";
-import { User } from "@/types";
-import { apiClient } from "@/lib/apiClient";
+import { apiClient } from "@/api/client";
+
+interface User {
+    id: number;
+    username: string;
+    email: string;
+    role: string;
+}
+
+interface RegisterData {
+    username: string;
+    email: string;
+    password: string;
+}
 
 interface AuthState {
     user: User | null;
-    isLoading: boolean;
-    error: string | null;
+    token: string | null;
     isAuthenticated: boolean;
-    login: (email: string, password: string) => Promise<void>;
+    isLoading: boolean;
+    isAdmin: boolean;
+    error: string | null;
+    login: (username: string, password: string) => Promise<void>;
     logout: () => void;
     checkAuth: () => Promise<void>;
+    register: (data: RegisterData) => Promise<void>;
 }
 
 export const useAuth = create<AuthState>((set) => ({
-    user: null,
-    isLoading: true,
+    user: JSON.parse(localStorage.getItem("user") || "null"),
+    token: localStorage.getItem("token"),
+    isAuthenticated: !!localStorage.getItem("token"),
+    isAdmin:
+        JSON.parse(localStorage.getItem("user") || "null")?.role === "ADMIN",
+    isLoading: false,
     error: null,
-    isAuthenticated: false,
 
-    login: async (email: string, password: string) => {
+    register: async (data: RegisterData) => {
+        try {
+            console.log("Попытка регистрации с данными:", {
+                username: data.username,
+                password: data.password,
+            });
+
+            const formData = new URLSearchParams();
+            formData.append("username", data.username.trim());
+            formData.append("password", data.password);
+
+            const response = await apiClient.post("/auth/register", formData, {
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+            });
+
+            if (response.data.access_token && response.data.user) {
+                localStorage.setItem("token", response.data.access_token);
+                set({
+                    user: response.data.user,
+                    token: response.data.access_token,
+                    isAuthenticated: true,
+                    isAdmin: response.data.user.role === "ADMIN",
+                    error: null,
+                });
+            } else {
+                throw new Error("Некорректный ответ от сервера");
+            }
+
+            return response.data;
+        } catch (error: any) {
+            console.error(
+                "Ошибка при регистрации:",
+                error.response?.data || error
+            );
+
+            const errorMessage =
+                error.response?.data?.detail ||
+                error.response?.data?.message ||
+                error.message ||
+                "Произошла ошибка при регистрации";
+
+            throw new Error(errorMessage);
+        }
+    },
+
+    login: async (username: string, password: string) => {
         try {
             set({ isLoading: true, error: null });
-            const { data } = await apiClient.post("/auth/login", {
-                email,
-                password,
+
+            // Создаем FormData
+            const formData = new URLSearchParams();
+            formData.append("username", username.trim());
+            formData.append("password", password.trim());
+
+            const response = await apiClient.post("/auth/login", formData, {
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
             });
-            localStorage.setItem("token", data.access_token);
-            set({ user: data.user, isAuthenticated: true });
+
+            const { access_token, user } = response.data;
+
+            localStorage.setItem("token", access_token);
+            localStorage.setItem("user", JSON.stringify(user));
+
+            set({
+                user,
+                token: access_token,
+                isAuthenticated: true,
+                isAdmin: user.role === "ADMIN",
+            });
         } catch (error) {
-            set({ error: "Ошибка авторизации" });
+            set({ error: "Неверное имя пользователя или пароль" });
             throw error;
         } finally {
             set({ isLoading: false });
@@ -37,32 +119,41 @@ export const useAuth = create<AuthState>((set) => ({
 
     logout: () => {
         localStorage.removeItem("token");
-        set({ user: null, isAuthenticated: false });
+        localStorage.removeItem("user");
+        set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isAdmin: false,
+        });
     },
 
     checkAuth: async () => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            set({ isLoading: false, isAuthenticated: false });
-            return;
-        }
-
         try {
-            set({ isLoading: true, error: null });
-            const { data } = await apiClient.get("/auth/me");
-            set({ user: data, isAuthenticated: true });
+            set({ isLoading: true });
+            const response = await apiClient.get("/auth/me");
+            const user = response.data.user;
+
+            localStorage.setItem("user", JSON.stringify(user));
+
+            set({
+                user,
+                isAuthenticated: true,
+                isAdmin: user.role === "ADMIN",
+                error: null,
+            });
         } catch (error) {
-            set({ user: null, isAuthenticated: false });
             localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            set({
+                user: null,
+                token: null,
+                isAuthenticated: false,
+                isAdmin: false,
+                error: "Сессия истекла",
+            });
         } finally {
             set({ isLoading: false });
         }
     },
 }));
-
-// Проверяем аутентификацию при инициализации только если есть токен
-if (localStorage.getItem("token")) {
-    useAuth.getState().checkAuth();
-} else {
-    useAuth.setState({ isLoading: false });
-}

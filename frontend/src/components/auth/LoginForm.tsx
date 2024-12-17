@@ -19,11 +19,11 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-    email: z.string().email({
-        message: "Пожалуйста, введите корректный email",
+    username: z.string().min(1, {
+        message: "Пожалуйста, введите логин",
     }),
-    password: z.string().min(6, {
-        message: "Пароль должен содержать минимум 6 символов",
+    password: z.string().min(1, {
+        message: "Пожалуйста, введите пароль",
     }),
 });
 
@@ -37,7 +37,7 @@ export function LoginForm() {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            email: "",
+            username: "",
             password: "",
         },
     });
@@ -45,20 +45,26 @@ export function LoginForm() {
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         try {
             setIsLoading(true);
-            await login(values.email, values.password);
-            
+            await login(values.username, values.password);
+
             const from = location.state?.from?.pathname || "/";
             navigate(from, { replace: true });
-            
+
             toast({
                 title: "Успешный вход",
                 description: "Добро пожаловать в систему",
             });
-        } catch (error) {
+        } catch (error: any) {
+            const errorMessage =
+                error.response?.data?.detail ||
+                error.response?.data?.message ||
+                error.message ||
+                "Проверьте правильность введенных данных";
+
             toast({
                 variant: "destructive",
                 title: "Ошибка входа",
-                description: "Проверьте правильность введенных данных",
+                description: errorMessage,
             });
         } finally {
             setIsLoading(false);
@@ -69,23 +75,23 @@ export function LoginForm() {
         <div className="mx-auto max-w-sm space-y-6">
             <div className="space-y-2 text-center">
                 <h1 className="text-2xl font-bold">Вход в систему</h1>
-                <p className="text-gray-500">
-                    Введите свои данные для входа
-                </p>
+                <p className="text-gray-500">Введите свои данные для входа</p>
             </div>
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-4"
+                >
                     <FormField
                         control={form.control}
-                        name="email"
+                        name="username"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Email</FormLabel>
+                                <FormLabel>Логин</FormLabel>
                                 <FormControl>
                                     <Input
                                         disabled={isLoading}
-                                        placeholder="Введите email"
-                                        type="email"
+                                        placeholder="Введите логин"
                                         {...field}
                                     />
                                 </FormControl>

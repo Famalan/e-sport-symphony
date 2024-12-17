@@ -41,13 +41,10 @@ CREATE TABLE tournaments (
 
 CREATE TABLE teams (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    logo_url VARCHAR(255),
-    description TEXT,
-    captain_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    captain_id INTEGER REFERENCES users(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(name)
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE tournament_teams (
@@ -138,5 +135,11 @@ $$ language 'plpgsql';
 
 CREATE TRIGGER update_users_updated_at
     BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Триггер для обновления updated_at
+CREATE TRIGGER update_teams_modtime
+    BEFORE UPDATE ON teams
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
